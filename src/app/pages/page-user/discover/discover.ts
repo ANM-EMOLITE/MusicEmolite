@@ -16,22 +16,23 @@ import { SongService } from '../../../core/services/song.service';
 import { InfiniteScrollDirective } from '../../../shared/directives/infinite-scroll.directive';
 import { PAGINATION_USER } from '../../../core/constants/pagination.constants';
 
-import { YoutubeVideoResponse } from '../../../core/models/youtube/youtube-res.model';
-import { YoutubeSearchRequest } from '../../../core/models/youtube/youtube-req.model';
+import { SongResponse } from '../../../core/models/song/res-song.model';
 
 interface SongRow {
-  id: string;
-  songId?: number | null;
+  /** videoId với bài Youtube (player phát theo videoId), id DB với bài upload */
+  id: string | number;
+  dbSongId: number;
+  songId: number;
   name: string;
   artist: string;
-  channelThumbnail?: string;
   duration: number;
   imgUrl?: string;
   views: number;
   url: string;
   isLiked?: boolean;
   albumIds?: number[];
-  videoId: string;
+  videoId: string | null;
+  sourceType?: number;
 }
 
 /**
@@ -102,7 +103,10 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     this.loadSongs(true);
   }
 
-  /** `append` distinguishes infinite-scroll loads (add to the list) from a fresh keyword/page-1 load (replace it). */
+  /**
+   * Chỉ query DB (nhạc đã được admin đồng bộ từ Youtube), không gọi Youtube nữa.
+   * `append` distinguishes infinite-scroll loads (add to the list) from a fresh keyword/page-1 load (replace it).
+   */
   loadSongs(append = false): void {
     const kw = this.keyword().trim();
 
@@ -118,25 +122,25 @@ export class DiscoverComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
     }
 
-    this.songService.searchYoutube({
+    this.songService.searchPublicSongs({
       page: this.page(),
       pageSize: PAGE_SIZE,
       searchParams: {
         keyword: kw
-      } as YoutubeSearchRequest
+      }
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
           let items: SongRow[] = (res.data ?? []).map(
-            (s: YoutubeVideoResponse) => this.mapYoutubeSong(s)
+            (s: SongResponse) => this.mapSong(s)
           );
 
           // Reorder/autoplay only makes sense on the first load, not on appended infinite-scroll pages.
           const hId = !append ? this.highlightId() : null;
 
           if (hId) {
-            const idx = items.findIndex(x => x.id === hId);
+            const idx = items.findIndex(x => String(x.id) === hId);
 
             if (idx > 0) {
               const [selected] = items.splice(idx, 1);
@@ -155,11 +159,11 @@ export class DiscoverComponent implements OnInit, OnDestroy {
           }
 
           if (hId) {
-            const selected = items.find(x => x.id === hId);
+            const selected = items.find(x => String(x.id) === hId);
 
             if (selected) {
               this.player.setQueue(this.songs(), { autoAdvance: false });
-              this.player.playYoutubeSong(selected.id);
+              this.play(selected);
             }
           }
         },
@@ -171,9 +175,21 @@ export class DiscoverComponent implements OnInit, OnDestroy {
       });
   }
 
-  playSong(id: string): void {
+  playSong(id: string | number): void {
+    const song = this.songs().find(x => x.id === id);
+    if (!song) return;
+
     this.player.setQueue(this.songs(), { autoAdvance: false });
-    this.player.playYoutubeSong(id);
+    this.play(song);
+  }
+
+  private play(song: SongRow): void {
+    if (song.videoId) {
+      this.player.playYoutubeSong(song.id as string);
+      return;
+    }
+
+    this.player.playSong(song.id as number);
   }
 
   formatViews(v: number): string {
@@ -194,23 +210,21 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     return v.toString();
   }
 
-  private mapYoutubeSong(s: YoutubeVideoResponse): SongRow {
+  private mapSong(s: SongResponse): SongRow {
+    const isYoutube = s.sourceType === 3 || !!s.youtubeVideoId;
+
     return {
-      id: s.videoId,
-      songId: s.songId ?? null,
-      videoId: s.videoId,
+      id: isYoutube ? s.youtubeVideoId! : s.id,
+      dbSongId: s.id,
+      songId: s.id,
+      videoId: isYoutube ? s.youtubeVideoId! : null,
+      sourceType: s.sourceType,
       name: s.title,
-      artist: s.channel,
-      channelThumbnail: s.channelThumbnail,
+      artist: s.artistName ?? '',
       duration: s.duration ?? 0,
-      imgUrl:
-        s.thumbnailMedium ||
-        s.thumbnailHigh ||
-        s.thumbnailDefault ||
-        s.thumbnailStandard ||
-        s.thumbnailMaxres,
+      imgUrl: s.imgUrl || undefined,
       views: s.views ?? 0,
-      url: '',
+      url: isYoutube ? '' : s.fileUrl,
       isLiked: s.isLiked ?? false,
       albumIds: s.albumIds ?? []
     };

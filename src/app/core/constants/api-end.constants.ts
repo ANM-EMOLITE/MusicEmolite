@@ -57,6 +57,8 @@ export const API_END = {
     SEARCH: `${BASE_URL}songs/search`,
     SEARCH_PUBLIC: `${BASE_URL}songs/public/search`,
     SEARCH_ADMIN: `${BASE_URL}songs/admin/search`,
+    SYNC_ADMIN: `${BASE_URL}songs/admin/sync`,
+    SYNC_STATUS_ADMIN: `${BASE_URL}songs/admin/sync/status`,
     LIKED_BY_USER_ADMIN: (userId: number) => `${BASE_URL}songs/admin/liked-by-user/${userId}`,
     TRENDINGS: `${BASE_URL}songs/public/trending`,
     NEWEST: `${BASE_URL}songs/public/newest`,

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 
 import { AppTableComponent } from '../../../shared/components/table/table';
 import { TableColumn } from '../../../core/models/front-end/table/table-column.model';
@@ -10,6 +10,8 @@ import { FilterComponent } from '../../../shared/components/filter/filter';
 import { FilterField } from '../../../core/models/front-end/filter/filter-field.model';
 import { SongRequest } from '../../../core/models/song/req-song.model';
 import { DetailPanelComponent } from '../../../shared/components/detail-panel/detail-panel';
+import { ToastService } from '../../../core/services/toast.service';
+import { SongSyncStatus } from '../../../core/models/song/res-song-sync.model';
 
 @Component({
     selector: 'app-songs',
@@ -25,6 +27,12 @@ import { DetailPanelComponent } from '../../../shared/components/detail-panel/de
 export class Songs {
 
     private songService = inject(SongService);
+    private toast = inject(ToastService);
+    private destroyRef = inject(DestroyRef);
+
+    private readonly SYNC_POLL_MS = 3000;
+    private syncTimer: ReturnType<typeof setInterval> | null = null;
+    syncStatus = signal<SongSyncStatus | null>(null);
 
     selectedSong = signal<any | null>(null);
 
@@ -121,6 +129,76 @@ export class Songs {
 
     ngOnInit(): void {
         this.loadSongs();
+        // Nếu đang có lần đồng bộ chạy dở (vd: reload trang) thì hiện tiếp tiến độ
+        this.checkSyncStatus();
+        this.destroyRef.onDestroy(() => this.stopSyncPolling());
+    }
+
+    startSync() {
+        if (this.syncStatus()?.isRunning) return;
+
+        this.songService.startSyncAdmin().subscribe({
+            next: (res) => {
+                if (res?.data) this.syncStatus.set(res.data);
+
+                if (res?.data?.isRunning) {
+                    this.startSyncPolling();
+                } else {
+                    this.toast.error(res?.message || 'Không thể bắt đầu đồng bộ');
+                }
+            },
+            error: () => this.toast.error('Không thể bắt đầu đồng bộ')
+        });
+    }
+
+    private checkSyncStatus() {
+        this.songService.getSyncStatusAdmin().subscribe({
+            next: (res) => {
+                const status = res?.data;
+                if (!status) return;
+
+                const wasRunning = this.syncStatus()?.isRunning;
+                this.syncStatus.set(status);
+
+                if (status.isRunning) {
+                    this.startSyncPolling();
+                    return;
+                }
+
+                this.stopSyncPolling();
+
+                if (wasRunning) {
+                    if (status.stage === 'failed') {
+                        this.toast.error(status.message || 'Đồng bộ thất bại');
+                    } else {
+                        this.toast.success(`Đồng bộ xong: thêm ${status.inserted} bài, ${status.lyricsFound} bài có lyrics`);
+                    }
+                    this.loadSongs();
+                }
+            }
+        });
+    }
+
+    private startSyncPolling() {
+        if (this.syncTimer) return;
+        this.syncTimer = setInterval(() => this.checkSyncStatus(), this.SYNC_POLL_MS);
+    }
+
+    private stopSyncPolling() {
+        if (!this.syncTimer) return;
+        clearInterval(this.syncTimer);
+        this.syncTimer = null;
+    }
+
+    syncStageLabel(status: SongSyncStatus): string {
+        switch (status.stage) {
+            case 'fetching': return `Đang lấy nhạc từ YouTube (${status.fetched} video)`;
+            case 'saving': return `Đang lưu bài mới (${status.inserted} bài)`;
+            case 'lyrics': return `Đang tìm lyrics (${status.lyricsProcessed}/${status.lyricsTotal})`;
+            case 'done': return 'Đồng bộ hoàn tất';
+            case 'failed': return 'Đồng bộ thất bại';
+            default: return '';
+        }
     }
 
     loadSongs() {

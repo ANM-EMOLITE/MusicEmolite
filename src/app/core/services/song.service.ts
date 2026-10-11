@@ -12,6 +12,7 @@ import { LyricsRequestDto, LyricsSearchRequestDto, PublishLyricsRequest } from "
 import { YoutubeVideoResponse } from "../models/youtube/youtube-res.model";
 import { YoutubeSearchRequest } from "../models/youtube/youtube-req.model";
 import { MixPlaylistResponse } from "../models/song/res-mix.model";
+import { SongSyncStatus } from "../models/song/res-song-sync.model";
 
 @Injectable({
   providedIn: 'root'
@@ -54,6 +55,19 @@ export class SongService {
     >(
       API_END.SONG.SEARCH_ADMIN,
       data
+    );
+  }
+
+  startSyncAdmin(): Observable<BaseResponse<SongSyncStatus>> {
+    return this.api.postData<BaseResponse<SongSyncStatus>, object>(
+      API_END.SONG.SYNC_ADMIN,
+      {}
+    );
+  }
+
+  getSyncStatusAdmin(): Observable<BaseResponse<SongSyncStatus>> {
+    return this.api.getData<BaseResponse<SongSyncStatus>>(
+      API_END.SONG.SYNC_STATUS_ADMIN
     );
   }
 
