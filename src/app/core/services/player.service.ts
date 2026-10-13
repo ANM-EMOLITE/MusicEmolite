@@ -383,7 +383,7 @@ export class PlayerService {
 
     this.currentTrack.set({
       ...track,
-      dbSongId: null,
+      dbSongId: track.dbSongId ?? null,
       isLiked: track.isLiked ?? false,
       syncedLyrics: []
     });
@@ -400,7 +400,40 @@ export class PlayerService {
 
     this.addYoutubeHistory(track);
     this.loadYoutubeVideo(track.videoId);
-    this.fetchLyrics(track.id, track.name, track.artist);
+    this.loadYoutubeLyrics(track);
+  }
+
+  /**
+   * Bài đã có trong DB (vd: được admin đồng bộ) thì dùng lyrics lưu sẵn trong DB;
+   * chưa có lyrics thì mới tìm trên LRCLIB như cũ.
+   */
+  private loadYoutubeLyrics(track: any) {
+    const dbSongId = track.dbSongId ?? track.songId;
+
+    if (!dbSongId) {
+      this.fetchLyrics(track.id, track.name, track.artist);
+      return;
+    }
+
+    this.songService.getSongDetail(dbSongId).subscribe({
+      next: res => {
+        const detail = res.data;
+        const current = this.currentTrack();
+        if (!current || current.id !== track.id) return;
+
+        if (detail?.syncedLyrics?.length || detail?.lyrics) {
+          this.currentTrack.update((t: any) => ({
+            ...t,
+            syncedLyrics: detail.syncedLyrics ?? [],
+            lyrics: detail.lyrics ?? t.lyrics
+          }));
+          return;
+        }
+
+        this.fetchLyrics(track.id, track.name, track.artist);
+      },
+      error: () => this.fetchLyrics(track.id, track.name, track.artist)
+    });
   }
 
   private fetchLyrics(trackId: string | number, title: string, artist: string) {

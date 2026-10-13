@@ -41,6 +41,11 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }
+android.applicationVariants.all { variant ->
+  variant.outputs.all {
+    outputFileName = "SongWithMe-${variant.versionName}.apk"
+  }
+}
 
 apply from: 'capacitor.build.gradle'
 

@@ -30,7 +30,7 @@ import {
 
 import { AuthService } from '../../core/services/auth.service';
 import { SongService } from '../../core/services/song.service';
-import { YoutubeVideoResponse } from '../../core/models/youtube/youtube-res.model';
+import { SongResponse } from '../../core/models/song/res-song.model';
 
 @Component({
   selector: 'app-topbar',
@@ -56,7 +56,7 @@ export class TopbarComponent implements OnDestroy, OnInit {
   openMenu = signal(false);
 
   searchQuery = signal('');
-  suggestions = signal<YoutubeVideoResponse[]>([]);
+  suggestions = signal<SongResponse[]>([]);
 
   showDropdown = signal(false);
   isSearching = signal(false);
@@ -79,7 +79,8 @@ export class TopbarComponent implements OnDestroy, OnInit {
 
       this.isSearching.set(true);
 
-      return this.songService.searchYoutube({
+      // Chỉ query DB (nhạc đã đồng bộ), không gọi Youtube
+      return this.songService.searchPublicSongs({
         page: 1,
         pageSize: 5,
         searchParams: {
@@ -134,7 +135,7 @@ export class TopbarComponent implements OnDestroy, OnInit {
     }
   }
 
-  selectSuggestion(item: YoutubeVideoResponse): void {
+  selectSuggestion(item: SongResponse): void {
     this.showDropdown.set(false);
 
     this.router.navigate(
@@ -142,7 +143,7 @@ export class TopbarComponent implements OnDestroy, OnInit {
       {
         queryParams: {
           keyword: this.searchQuery(),
-          highlightId: item.videoId
+          highlightId: item.youtubeVideoId || item.id
         }
       }
     );
