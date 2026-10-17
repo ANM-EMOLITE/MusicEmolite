@@ -57,10 +57,7 @@ export class LoginComponent {
                         const user = userRes?.data;
                         this.authService.user.set(user ?? null);
                         const roleCode = user?.roleCode ?? '';
-                        if (roleCode.includes('ADMIN')) {
-                            this.router.navigate(['/admin/dashboard']);
-                            return;
-                        }
+                        if (roleCode.includes('ADMIN')) return this.rejectAdmin();
 
                         if (roleCode.includes('USER')) {
                             this.router.navigate(['/users/home']);
@@ -90,6 +87,12 @@ export class LoginComponent {
                 this.errorMessage.set(message);
             }
         });
+    }
+
+    /** Admin accounts may only sign in through the dedicated admin login route. */
+    private rejectAdmin() {
+        this.authService.logout();
+        this.errorMessage.set('Tên đăng nhập hoặc mật khẩu không đúng');
     }
 
     loginWithGoogle() {
@@ -128,10 +131,7 @@ export class LoginComponent {
                         this.authService.user.set(user ?? null);
                         const roleCode = user?.roleCode ?? '';
 
-                        if (roleCode.includes('ADMIN')) {
-                            this.router.navigate(['/admin/profile']);
-                            return;
-                        }
+                        if (roleCode.includes('ADMIN')) return this.rejectAdmin();
 
                         if (roleCode.includes('USER')) {
                             this.router.navigate(['/users/home']);

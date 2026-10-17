@@ -18,6 +18,8 @@ import { MessagesComponent } from './pages/page-user/messages/messages';
 import { NotFoundComponent } from './pages/page-default/not-found/not-found';
 import { UnauthorizedComponent } from './pages/page-default/unauthorized/unauthorized';
 import { adminGuard } from './core/guards/admin.guard';
+import { userAreaGuard } from './core/guards/user-area.guard';
+import { AdminLoginComponent } from './pages/page-admin/admin-login/admin-login';
 
 export const routes: Routes = [
     {
@@ -50,6 +52,7 @@ export const routes: Routes = [
     {
         path: URL_END.USER.BASE,
         component: LayoutUserComponent,
+        canActivate: [userAreaGuard],
         children: [
             {
                 path: URL_END.USER.HOME,
@@ -83,7 +86,13 @@ export const routes: Routes = [
     },
     {
         path: URL_END.USER.SETTING,
+        canActivate: [userAreaGuard],
         loadChildren: () => import('./pages/page-user/settings/settings.routes').then(m => m.SETTINGS_ROUTES)
+    },
+    {
+        // Must stay above the guarded admin route so it isn't swallowed by it.
+        path: URL_END.ADMIN.LOGIN,
+        component: AdminLoginComponent
     },
     {
         path: URL_END.ADMIN.BASE,

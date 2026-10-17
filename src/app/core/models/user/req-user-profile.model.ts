@@ -18,7 +18,7 @@ export interface ReqUsersFilter {
     keyword?: string;
     username?: string;
     email?: string;
-    role?: string;
+    userType?: number;
     fullName?: string;
     phone?: string;
     gender?: string;

@@ -134,6 +134,22 @@ export class UsersComponent {
                     value: 'female'
                 }
             ]
+        },
+
+        {
+            key: 'userType',
+            label: 'Loại tài khoản',
+            type: 'select',
+            options: [
+                {
+                    label: 'Free Plan',
+                    value: 1
+                },
+                {
+                    label: 'Premium',
+                    value: 2
+                }
+            ]
         }
     ];
 
@@ -181,9 +197,11 @@ export class UsersComponent {
         },
 
         {
-            key: 'roleCode',
-            label: 'Vai trò',
-            align: 'center'
+            key: 'isPremium',
+            label: 'Loại tài khoản',
+            type: 'badge',
+            align: 'center',
+            badgeConfig: { trueLabel: 'Premium', falseLabel: 'Free Plan', trueClass: 'bg-amber-100 text-amber-700', falseClass: 'bg-gray-100 text-gray-600' }
         },
 
         {
@@ -306,6 +324,7 @@ export class UsersComponent {
                                 : item.gender === 'female'
                                     ? 'Nữ'
                                     : item.gender,
+                            isPremium: item.userType === 2,
                             stt:
                                 ((this.currentPage() - 1)
                                     * this.pageSize())
@@ -384,6 +403,9 @@ export class UsersComponent {
     onRowDblClick(row: ResUsers) {
 
         this.selectedUser.set(row);
+
+        if (!row.id) return;
+
         this.loadUserAlbums(row.id);
         this.loadUserLikedSongs(row.id);
     }

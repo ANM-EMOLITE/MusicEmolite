@@ -153,8 +153,8 @@
             }
 
             <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-400">Vai trò</span>
-                <span class="font-medium text-gray-800">{{ user.roleCode }}</span>
+                <span class="text-gray-400">Loại tài khoản</span>
+                <span class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium" [class.bg-amber-100]="user.userType === 2" [class.text-amber-700]="user.userType === 2" [class.bg-gray-100]="user.userType !== 2" [class.text-gray-600]="user.userType !== 2">{{ user.userTypeName }}</span>
             </div>
 
             <div class="flex items-center justify-between text-sm">

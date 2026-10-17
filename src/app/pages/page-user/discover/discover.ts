@@ -16,23 +16,25 @@ import { SongService } from '../../../core/services/song.service';
 import { InfiniteScrollDirective } from '../../../shared/directives/infinite-scroll.directive';
 import { PAGINATION_USER } from '../../../core/constants/pagination.constants';
 
-import { SongResponse } from '../../../core/models/song/res-song.model';
+import { YoutubeVideoResponse } from '../../../core/models/youtube/youtube-res.model';
 
 interface SongRow {
-  /** videoId với bài Youtube (player phát theo videoId), id DB với bài upload */
-  id: string | number;
-  dbSongId: number;
-  songId: number;
+  /** videoId - player phát theo videoId */
+  id: string;
+  /** id DB nếu bài đã được đồng bộ, null nếu chưa có trong DB */
+  dbSongId: number | null;
+  songId: number | null;
   name: string;
   artist: string;
+  /** Gửi kèm khi play để BE tạo/cập nhật ảnh nghệ sĩ */
+  channelThumbnail?: string;
   duration: number;
   imgUrl?: string;
   views: number;
   url: string;
   isLiked?: boolean;
   albumIds?: number[];
-  videoId: string | null;
-  sourceType?: number;
+  videoId: string;
 }
 
 /**
@@ -64,6 +66,7 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   isLoadingMore = signal(false);
 
   keyword = signal('');
+  errorMessage = signal('');
   highlightId = signal<string | null>(null);
 
   page = signal(PAGINATION_USER.DEFAULT_PAGE);
@@ -104,11 +107,12 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Chỉ query DB (nhạc đã được admin đồng bộ từ Youtube), không gọi Youtube nữa.
+   * Tìm thẳng trên Youtube (BE cache theo keyword + chặn khi hết quota) - dữ liệu đồng bộ trong DB không đủ để tìm bài.
    * `append` distinguishes infinite-scroll loads (add to the list) from a fresh keyword/page-1 load (replace it).
    */
   loadSongs(append = false): void {
     const kw = this.keyword().trim();
+    if (!append) this.errorMessage.set('');
 
     if (!kw) {
       this.songs.set([]);
@@ -122,25 +126,19 @@ export class DiscoverComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
     }
 
-    this.songService.searchPublicSongs({
-      page: this.page(),
-      pageSize: PAGE_SIZE,
-      searchParams: {
-        keyword: kw
-      }
-    })
+    this.songService.searchYoutube({ page: this.page(), pageSize: PAGE_SIZE, searchParams: { keyword: kw } })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
-          let items: SongRow[] = (res.data ?? []).map(
-            (s: SongResponse) => this.mapSong(s)
-          );
+          if (res?.code === '429' && !append) this.errorMessage.set('Hệ thống tìm kiếm đang quá tải, vui lòng thử lại sau ít phút');
+
+          let items: SongRow[] = (res.data ?? []).map(s => this.mapYoutubeSong(s));
 
           // Reorder/autoplay only makes sense on the first load, not on appended infinite-scroll pages.
           const hId = !append ? this.highlightId() : null;
 
           if (hId) {
-            const idx = items.findIndex(x => String(x.id) === hId);
+            const idx = items.findIndex(x => x.id === hId);
 
             if (idx > 0) {
               const [selected] = items.splice(idx, 1);
@@ -159,37 +157,26 @@ export class DiscoverComponent implements OnInit, OnDestroy {
           }
 
           if (hId) {
-            const selected = items.find(x => String(x.id) === hId);
+            const selected = items.find(x => x.id === hId);
 
             if (selected) {
               this.player.setQueue(this.songs(), { autoAdvance: false });
-              this.play(selected);
+              this.player.playYoutubeSong(selected.id);
             }
           }
         },
 
         error: () => {
+          if (!append) this.errorMessage.set('Không tìm kiếm được, vui lòng thử lại');
           this.isLoading.set(false);
           this.isLoadingMore.set(false);
         }
       });
   }
 
-  playSong(id: string | number): void {
-    const song = this.songs().find(x => x.id === id);
-    if (!song) return;
-
+  playSong(id: string): void {
     this.player.setQueue(this.songs(), { autoAdvance: false });
-    this.play(song);
-  }
-
-  private play(song: SongRow): void {
-    if (song.videoId) {
-      this.player.playYoutubeSong(song.id as string);
-      return;
-    }
-
-    this.player.playSong(song.id as number);
+    this.player.playYoutubeSong(id);
   }
 
   formatViews(v: number): string {
@@ -210,21 +197,19 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     return v.toString();
   }
 
-  private mapSong(s: SongResponse): SongRow {
-    const isYoutube = s.sourceType === 3 || !!s.youtubeVideoId;
-
+  private mapYoutubeSong(s: YoutubeVideoResponse): SongRow {
     return {
-      id: isYoutube ? s.youtubeVideoId! : s.id,
-      dbSongId: s.id,
-      songId: s.id,
-      videoId: isYoutube ? s.youtubeVideoId! : null,
-      sourceType: s.sourceType,
+      id: s.videoId,
+      dbSongId: s.songId ?? null,
+      songId: s.songId ?? null,
+      videoId: s.videoId,
       name: s.title,
-      artist: s.artistName ?? '',
+      artist: s.channel,
+      channelThumbnail: s.channelThumbnail,
       duration: s.duration ?? 0,
-      imgUrl: s.imgUrl || undefined,
+      imgUrl: s.thumbnailMedium || s.thumbnailHigh || s.thumbnailDefault || s.thumbnailStandard || s.thumbnailMaxres,
       views: s.views ?? 0,
-      url: isYoutube ? '' : s.fileUrl,
+      url: '',
       isLiked: s.isLiked ?? false,
       albumIds: s.albumIds ?? []
     };
