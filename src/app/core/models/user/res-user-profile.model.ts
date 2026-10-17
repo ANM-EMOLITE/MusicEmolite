@@ -23,7 +23,8 @@ export interface ResUsers {
     refCode?: string;
     username?: string;
     email?: string;
-    roleCode?: string;
+    userType?: number;
+    userTypeName?: string;
     fullName?: string;
     phone?: string;
     dateOfBirth?: string;

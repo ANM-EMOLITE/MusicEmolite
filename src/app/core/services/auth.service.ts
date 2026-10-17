@@ -25,6 +25,7 @@ export class AuthService {
   private TOKEN_KEY = 'token';
   private REFRESH_TOKEN_KEY = 'refreshToken';
   private refreshInProgress$: Observable<BaseResponse<RefreshTokenResponse>> | null = null;
+  private currentUserInProgress$: Observable<BaseResponse<CurrentUserResponse>> | null = null;
   user = signal<CurrentUserResponse | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
@@ -38,10 +39,17 @@ export class AuthService {
 
     return !!token;
   }
-  getCurrentUser() {
-    return this.api.getData<BaseResponse<CurrentUserResponse>>(
-      API_END.AUTH.CURRENT_USER
-    );
+
+  getCurrentUser(): Observable<BaseResponse<CurrentUserResponse>> {
+    if (!this.currentUserInProgress$) {
+      this.currentUserInProgress$ = this.api.getData<BaseResponse<CurrentUserResponse>>(API_END.AUTH.CURRENT_USER).pipe(
+        tap(res => this.user.set(res?.data ?? null)),
+        finalize(() => this.currentUserInProgress$ = null),
+        shareReplay(1)
+      );
+    }
+
+    return this.currentUserInProgress$;
   }
 
   setToken(token: string) {
@@ -68,11 +76,6 @@ export class AuthService {
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
   }
 
-  /**
-   * Silently exchanges the refresh token for a new access token. Concurrent
-   * callers (e.g. several requests 401-ing at once) share the same in-flight
-   * request instead of racing to rotate the refresh token themselves.
-   */
   refreshToken(): Observable<BaseResponse<RefreshTokenResponse>> {
     const token = this.getRefreshToken();
 

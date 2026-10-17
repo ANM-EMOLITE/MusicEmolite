@@ -40,6 +40,6 @@ export class AdminSidebarComponent {
     this.authService.logout();
     this.chatHubService.stop();
     this.player.stop();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/admin/emolite/login']);
   }
 }

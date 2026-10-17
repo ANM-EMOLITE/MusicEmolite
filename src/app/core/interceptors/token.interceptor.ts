@@ -42,7 +42,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
         }),
         catchError(refreshError => {
           authService.logout();
-          router.navigate(['/auth/login']);
+          router.navigate([location.pathname.startsWith('/admin') ? '/admin/emolite/login' : '/auth/login']);
           return throwError(() => refreshError);
         })
       );

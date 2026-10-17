@@ -14,6 +14,7 @@ export const URL_END = {
 
   ADMIN: {
     BASE: 'admin',
+    LOGIN: 'admin/emolite/login',
     SONGS: 'songs',
     PROFILE: 'profile'
   },

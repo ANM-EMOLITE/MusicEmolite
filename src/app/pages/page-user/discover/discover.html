@@ -43,9 +43,7 @@
       </svg>
     </div>
 
-    <p class="text-white/40">
-      Không tìm thấy bài hát nào
-    </p>
+    <p class="text-white/40">{{ errorMessage() || 'Không tìm thấy bài hát nào' }}</p>
   </div>
 
   } @else {
