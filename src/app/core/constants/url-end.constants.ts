@@ -12,13 +12,6 @@ export const URL_END = {
     MESSAGES: 'messages'
   },
 
-  ADMIN: {
-    BASE: 'admin',
-    LOGIN: 'admin/emolite/login',
-    SONGS: 'songs',
-    PROFILE: 'profile'
-  },
-
   AUTH: {
     BASE: 'auth',
     LOGIN: 'login',

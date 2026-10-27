@@ -7,9 +7,8 @@ import { CurrentUserResponse } from '../models/auth/res-current-user.model';
 const isAdmin = (user: CurrentUserResponse | null): boolean => (user?.roleCode ?? '').includes('ADMIN');
 
 /**
- * Keeps admin sessions out of the user area: an admin token left over from a previous
- * admin visit is logged out and sent back to the dedicated admin login. Guests and normal
- * users pass straight through (the user area is public).
+ * Keeps admin sessions out of the user area: an admin token is logged out and sent back
+ * to the login page. Guests and normal users pass straight through (the user area is public).
  */
 export const userAreaGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -17,7 +16,7 @@ export const userAreaGuard: CanActivateFn = () => {
 
   const kickAdmin = () => {
     authService.logout();
-    return router.createUrlTree(['/admin/emolite/login']);
+    return router.createUrlTree(['/auth/login']);
   };
 
   const currentUser = authService.user();

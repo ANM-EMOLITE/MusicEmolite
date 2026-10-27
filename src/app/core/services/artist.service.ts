@@ -26,19 +26,6 @@ export class ArtistService {
       data
     );
   }
-  /** Same listing as searchArtists, but requires login - for admin management screens. */
-  searchArtistsAdmin(data: BaseSearchDto<ArtistRequest>)
-    : Observable<BaseTableResponse<ArtistResponse>> {
-
-    return this.api.postData<
-      BaseTableResponse<ArtistResponse>,
-      BaseSearchDto<ArtistRequest>
-    >(
-      API_END.ARTIST.SEARCH_ADMIN,
-      data
-    );
-  }
-
   getArtistDetail(id: number): Observable<BaseResponse<ArtistResponse>> {
     return this.api.getData<BaseResponse<ArtistResponse>>(
       API_END.ARTIST.DETAIL(id)

@@ -12,7 +12,6 @@ import { LyricsRequestDto, LyricsSearchRequestDto, PublishLyricsRequest } from "
 import { YoutubeVideoResponse } from "../models/youtube/youtube-res.model";
 import { YoutubeSearchRequest } from "../models/youtube/youtube-req.model";
 import { MixPlaylistResponse } from "../models/song/res-mix.model";
-import { SongSyncStatus } from "../models/song/res-song-sync.model";
 
 @Injectable({
   providedIn: 'root'
@@ -42,32 +41,6 @@ export class SongService {
     >(
       API_END.SONG.SEARCH_PUBLIC,
       data
-    );
-  }
-
-  /** Same listing as searchPublicSongs, but requires login - for admin management screens. */
-  searchSongsAdmin(data: BaseSearchDto<SongRequest>)
-    : Observable<BaseTableResponse<SongResponse>> {
-
-    return this.api.postData<
-      BaseTableResponse<SongResponse>,
-      BaseSearchDto<SongRequest>
-    >(
-      API_END.SONG.SEARCH_ADMIN,
-      data
-    );
-  }
-
-  startSyncAdmin(): Observable<BaseResponse<SongSyncStatus>> {
-    return this.api.postData<BaseResponse<SongSyncStatus>, object>(
-      API_END.SONG.SYNC_ADMIN,
-      {}
-    );
-  }
-
-  getSyncStatusAdmin(): Observable<BaseResponse<SongSyncStatus>> {
-    return this.api.getData<BaseResponse<SongSyncStatus>>(
-      API_END.SONG.SYNC_STATUS_ADMIN
     );
   }
 
@@ -159,19 +132,6 @@ export class SongService {
     );
   }
 
-  /** Admin-only: all songs a specific user has liked. */
-  getLikedSongsByUserAdmin(userId: number, data: BaseSearchDto<SongRequest>)
-    : Observable<BaseTableResponse<SongResponse>> {
-
-    return this.api.postData<
-      BaseTableResponse<SongResponse>,
-      BaseSearchDto<SongRequest>
-    >(
-      API_END.SONG.LIKED_BY_USER_ADMIN(userId),
-      data
-    );
-  }
-
   getSongDetail(id: number): Observable<BaseResponse<SongResponse>> {
     return this.api.getData<BaseResponse<SongResponse>>(API_END.SONG.DETAIL(id));
   }
@@ -196,7 +156,6 @@ export class SongService {
   toggleLike(id: number): Observable<BaseResponse<SongResponse>> {
     return this.api.postData<BaseResponse<SongResponse>, {}>(API_END.SONG.LIKE(id), {});
   }
-
 
   getLyrics(params: LyricsRequestDto): Observable<BaseResponse<LyricsResponseDto>> {
     return this.api.getData<BaseResponse<LyricsResponseDto>>(

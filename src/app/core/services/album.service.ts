@@ -41,35 +41,8 @@ export class AlbumService {
     );
   }
 
-  /** Same listing as searchPublicAlbums, but requires login - for admin management screens. */
-  searchAlbumsAdmin(
-    data: BaseSearchDto<AlbumRequest>
-  ): Observable<BaseTableResponse<AlbumResponse>> {
-
-    return this.api.postData<
-      BaseTableResponse<AlbumResponse>,
-      BaseSearchDto<AlbumRequest>
-    >(
-      API_END.ALBUM.SEARCH_ADMIN,
-      data
-    );
-  }
-
   getAlbumById(id: number): Observable<BaseResponse<AlbumResponse>> {
     return this.api.getData<BaseResponse<AlbumResponse>>(API_END.ALBUM.DETAIL(id));
-  }
-
-  /** Admin-only: all albums (public or private) created by a specific user. */
-  getAlbumsByUserAdmin(userId: number, data: BaseSearchDto<AlbumRequest>)
-    : Observable<BaseTableResponse<AlbumResponse>> {
-
-    return this.api.postData<
-      BaseTableResponse<AlbumResponse>,
-      BaseSearchDto<AlbumRequest>
-    >(
-      API_END.ALBUM.BY_USER_ADMIN(userId),
-      data
-    );
   }
 
   createAlbum(data: AlbumCreateRequest) {
