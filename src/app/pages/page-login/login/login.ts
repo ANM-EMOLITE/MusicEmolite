@@ -89,7 +89,7 @@ export class LoginComponent {
         });
     }
 
-    /** Admin accounts may only sign in through the dedicated admin login route. */
+    /** Admin accounts sign in on the separate admin website, not here. */
     private rejectAdmin() {
         this.authService.logout();
         this.errorMessage.set('Tên đăng nhập hoặc mật khẩu không đúng');

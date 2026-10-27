@@ -25,12 +25,11 @@ export class App {
     this.authService.getCurrentUser().subscribe({
       next: (res: any) => {
         // user signal is set by getCurrentUser() itself; token is gone if userAreaGuard just kicked an admin out.
-        // Admin area has no chat - skip the hub + conversations call.
         if (this.authService.getToken() && !res.data?.roleCode?.includes('ADMIN')) this.chatHubService.start();
       },
       error: () => {
         this.authService.logout();
-        this.router.navigate([location.pathname.startsWith('/admin') ? '/admin/emolite/login' : '/auth/login']);
+        this.router.navigate(['/auth/login']);
       }
     });
     this.userService.getUserProfile().subscribe();

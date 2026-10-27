@@ -56,10 +56,6 @@ export const API_END = {
     BASE: `${BASE_URL}songs`,
     SEARCH: `${BASE_URL}songs/search`,
     SEARCH_PUBLIC: `${BASE_URL}songs/public/search`,
-    SEARCH_ADMIN: `${BASE_URL}songs/admin/search`,
-    SYNC_ADMIN: `${BASE_URL}songs/admin/sync`,
-    SYNC_STATUS_ADMIN: `${BASE_URL}songs/admin/sync/status`,
-    LIKED_BY_USER_ADMIN: (userId: number) => `${BASE_URL}songs/admin/liked-by-user/${userId}`,
     TRENDINGS: `${BASE_URL}songs/public/trending`,
     NEWEST: `${BASE_URL}songs/public/newest`,
     RECENTS: `${BASE_URL}songs/recent`,
@@ -81,29 +77,17 @@ export const API_END = {
     BASE: `${BASE_URL}albums`,
     SEARCH: `${BASE_URL}albums/search`,
     SEARCH_PUBLIC: `${BASE_URL}albums/public/search`,
-    SEARCH_ADMIN: `${BASE_URL}albums/admin/search`,
-    BY_USER_ADMIN: (userId: number) => `${BASE_URL}albums/admin/by-user/${userId}`,
     DETAIL: (id: number) => `${BASE_URL}albums/${id}`
   },
 
   ARTIST: {
     BASE: `${BASE_URL}artists`,
     SEARCH: `${BASE_URL}artists/search`,
-    SEARCH_ADMIN: `${BASE_URL}artists/admin/search`,
     DETAIL: (id: number) => `${BASE_URL}artists/${id}`,
     EDIT: (id: number) => `${BASE_URL}artists/${id}`,
   },
 
   BANK: {
     LIST: `${BASE_URL}bank`
-  },
-
-  DASHBOARD: {
-    SUMMARY: `${BASE_URL}dashboard/summary`,
-    TREND: `${BASE_URL}dashboard/trend`,
-  },
-
-  ACTIVITY_LOG: {
-    SEARCH: `${BASE_URL}activity-logs/search`,
   }
 };
